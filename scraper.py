@@ -9,7 +9,6 @@ import urllib2
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-
 #### FUNCTIONS 1.0
 
 def validateFilename(filename):
@@ -57,7 +56,6 @@ def validateURL(url):
         print ("Error validating URL.")
         return False, False
 
-
 def validate(filename, file_url):
     validFilename = validateFilename(filename)
     validURL, validFiletype = validateURL(file_url)
@@ -85,36 +83,32 @@ def convert_mth_strings ( mth_string ):
 
 #### VARIABLES 1.0
 
-entity_id = "E3901_SBC_gov"
-url = "http://www.swindon.gov.uk/info/20028/open_data_and_transparency/399/payments_to_suppliers_over_500"
+entity_id = "E4205_RBC_gov"
+url = "https://data.gov.uk/dataset/council-spending-over-500"
 errors = 0
 data = []
-
 
 #### READ HTML 1.0
 
 html = urllib2.urlopen(url)
 soup = BeautifulSoup(html, 'lxml')
 
+
 #### SCRAPE DATA
 
-block = soup.find('div', attrs = {'class': 'editor'})
-links_block = block.find('ul')
-links = links_block.find_all('a')
-for link in links:
-    if 'http' not in link['href']:
-        url = 'http://www.swindon.gov.uk'+link['href']
-    else:
-        url = link['href']
-    csvfile = link.text.strip().replace(u'\xa0', ' ').split('-')[-1].strip()
-    csvMth = csvfile[:3]
-    csvYr = csvfile[-4:]
-    if 'mber' in csvYr:
-        csvYr = '2014'
-    csvMth = convert_mth_strings(csvMth.upper())
-    todays_date = str(datetime.now())
-    data.append([csvYr, csvMth, url])
 
+blocks = soup.find_all('div', 'dataset-resource-text')
+for block in blocks:
+    link = block.find_all('a')[-1]
+    url = link['href']
+    csvfile =block.find('span', 'inner-cell').text.split()[0]
+    if 'Council' not in csvfile and '.csv' in url:
+        csvMth = csvfile.split('/')[1]
+        if len(csvMth) == 1:
+            csvMth = '0'+csvMth
+        csvYr = csvfile.split('/')[2]
+        csvMth = convert_mth_strings(csvMth.upper())
+        data.append([csvYr, csvMth, url])
 
 #### STORE DATA 1.0
 
@@ -137,3 +131,4 @@ if errors > 0:
 
 
 #### EOF
+
